@@ -1,4 +1,4 @@
-terminnal/cmd 基本操作
+terminal/cmd 基本操作
     1.本地初始化一个文件夹做为仓库
         git init
     2.添加文件到head里面
