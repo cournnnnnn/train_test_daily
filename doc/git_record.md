@@ -22,7 +22,8 @@ git push 前最好 git pull 一下
     a1：先pull一下，不行再   
     q2：git pull origin master 拒绝合并无关的历史的错误解决
     a2：git pull origin master --allow-unrelated-histories
-    q3：
+    q3：git push 遇到文件冲突
+    a3：按提示rm/add后，需要commit才算完成冲突处理
     
     
 1.git的撤销操作
