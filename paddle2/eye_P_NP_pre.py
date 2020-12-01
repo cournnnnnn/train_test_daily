@@ -25,10 +25,10 @@ def continue_to_fit():
     train_dataset = eye_P_NP_fit_save.MyDataset(mode='train')
     lenet = eye_P_NP_fit_save.LeNet(2)
     model = paddle.Model(lenet)
-    model.load('./output/final')
+    model.load('./output1/final')
     opt = paddle.optimizer.Adam(learning_rate=0.001,parameters=model.parameters())
     model.prepare(opt,paddle.nn.CrossEntropyLoss(),metrics=paddle.metric.Accuracy())
-    model.fit(train_dataset,epochs=2,batch_size=10,verbose=1)
+    model.fit(train_dataset,epochs=2,batch_size=10,verbose=1,save_dir='./output2')
 
 def continue_to_pre():
     imgpath = '/home/chan/dataset/eye/PALM-Training400/PALM-Training400/P0031.jpg'
@@ -55,8 +55,8 @@ def continue_to_pre():
     print('img: {} \n---predict result: {}'.format(os.path.basename(imgpath),list_result[np.argmax(result[0])]))
 
 if __name__ == '__main__':
-    #continue_to_fit()
-    continue_to_pre()
+    continue_to_fit()
+    #continue_to_pre()
 
 
 

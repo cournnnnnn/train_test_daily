@@ -54,3 +54,5 @@ git revert HEAD^ 撤销前前一次 commit
 git revert commit-id (撤销指定的版本，撤销也会作为一次提交进行保存）
 git revert 是提交一个新的版本，将需要revert的版本的内容再反向修改回去，版本会递增，不影响之前提交的内容。
 
+查看git状态
+git status
