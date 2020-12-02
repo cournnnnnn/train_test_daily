@@ -29,6 +29,16 @@ or：
 sudo vim /etc/apt/sources.list
 手动添加 deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/debian buster stable
 
+
+
+执行：docker run ubuntu:15.10 /bin/echo "Hello world"
+爆出：”Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.26/images/json: dial unix /var/run/docker.sock: connect: permission denied“
+处理：
+sudo groupadd docker          #添加docker用户组
+sudo gpasswd -a $XXX docker   #检测当前用户是否已经在docker用户组中，其中XXX为用户名，例如我的，liangll
+sudo gpasswd -a $USER docker  #将当前用户添加至docker用户组
+newgrp docker                 #更新docker用户组
+
 ======================================================================================================================
 安装docker基本步骤：
 1）sudo apt-get update
@@ -62,5 +72,64 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io
 
 7）验证：docker --version
 
-==================================================================================================================================
+==========================================================================================================================
+docker run ubuntu:15.10 /bin/echo "Hello world"
+Docker 以 ubuntu15.10 镜像创建一个新容器，然后在容器里执行 bin/echo "Hello world"，然后输出结果。
+
+docker ps 
+打印 docker 状态
+docker ps -a
+打印所有的docker，包括已经停止的
+
+区别 ：就是之前容器的状态---->start 与 restart
+restart Restart a running container :翻译 就是重启一个正在运行的容器
+start Start a stopped container :翻译就是启动一个暂停的容器
+
+导出容器（停止的也可以）
+docker export 1e560fca3906 > ubuntu.tar
+
+导入成为镜像REPOSITORY：test/ubuntu，TAG ：v1
+cat ./ubuntu.tar | docker import - test/ubuntu:v1
+查看镜像
+docker images
+
+====================================================================================================
+
+运行一个 web 应用
+docker pull training/webapp  # 载入镜像
+docker run -d -P training/webapp python app.py
+或者docker run -d -p 5000:5000 training/webapp python app.py
+查看日志
+docker logs -f bf08b7f2cd89
+查看进程
+docker top wizardly_chandrasekhar
+
+docker rmi 命令，比如我们删除 hello-world 镜像
+
+Docker 容器连接
+参数-p或者-P，指定链接端口，地址，方式UDP/TCP
+
+创建一个新的 Docker 网络，网络下运行容器test1与test2，两者是互通的
+docker network create -d bridge test-net
+-d：参数指定 Docker 网络类型，有 bridge、overlay
+运行一个容器并连接到新建的 test-net 网络:
+docker run -itd --name test1 --network test-net ubuntu /bin/bash
+docker run -itd --name test2 --network test-net ubuntu /bin/bash
+
+从容器往宿主机copy：sudo docker cp 容器id:/容器路径 宿主机路径
+从宿主机往容器copy：sudo docker cp 宿主机路径 容器id:/容器路径
+
+===================================================================================================
+创建镜像，从 docker 镜像仓库中下载的镜像不能满足我们的需求时，我们可以通过以下两种方式对镜像进行更改。
+1.更新镜像
+docker run -t -i ubuntu:15.10 /bin/bash
+运行的容器内使用 apt-get update 命令进行更新
+exit 命令来退出这个容器
+docker commit -m="has update" -a="runoob" e218edb10161 runoob/ubuntu:v2
+#-m: 提交的描述信息 #-a: 指定镜像作者 #e218edb10161：容器 ID #runoob/ubuntu:v2: 指定要创建的目标镜像名
+2.构建镜像
+cat Dockerfile 并修改完成
+在Dockerfile同级目录使用docker build制作镜像
+docker build -t runoob/centos:6.7 #-t参数 ：指定要创建的目标镜像名：tag
+
 
