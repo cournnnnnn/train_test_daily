@@ -41,8 +41,8 @@ def continue_to_pre():
     label = InputSpec([None,1],dtype='int64',name='label')
     model = paddle.Model(lenet,input,label)
 
+    model.load('./output1/final')
     opt = paddle.optimizer.Adam(learning_rate=0.001,parameters=model.parameters())
-    model.load('./output/final')
     model.prepare(opt,paddle.nn.CrossEntropyLoss(),metrics=paddle.metric.Accuracy())
 
     result = model.predict(paddle.to_tensor(img))
@@ -55,8 +55,9 @@ def continue_to_pre():
     print('img: {} \n---predict result: {}'.format(os.path.basename(imgpath),list_result[np.argmax(result[0])]))
 
 if __name__ == '__main__':
-    continue_to_fit()
-    #continue_to_pre()
+    #第一次训练到50次后，loss不再减小，继续训练也不在减小
+    #continue_to_fit()
+    continue_to_pre()
 
 
 

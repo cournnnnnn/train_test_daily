@@ -136,7 +136,7 @@ def main_fit():
 
     start_time = datetime.now()
     #训练模型
-    model.fit(train_dataset,batch_size=10,epochs=2,verbose=1,save_dir='./output1',save_freq=1)
+    model.fit(train_dataset,batch_size=10,epochs=50,verbose=1,save_dir='./output1',save_freq=20)
     print('===================================================================================================')
     model.evaluate(valid_dataset,batch_size=10,verbose=1)
     end_time = datetime.now()
