@@ -1,61 +1,57 @@
-from paddle2.ImgSegment import build_imgsegment_model
 import paddle
+from paddle2.ImgSegment.build_imgsegment_model import PetDataset,PetNet,SoftmaxWithCrossEntropy
 from matplotlib import pyplot as plt
 import numpy as np
 
 
+n_image = 3#显示几幅图
+val_image_path = './images/'#预测图片地址
+label_images_path = './annotations/trimaps/'#图片label地址
+pre_dataset = PetDataset(val_image_path, label_images_path, mode='prediction')
 
-if __name__ == "__main__":
+model = paddle.Model(PetNet(37))
+model.load('./model/final/12')
+opt = paddle.optimizer.RMSProp(learning_rate=0.001,
+                               rho=0.9,
+                               momentum=0.0,
+                               epsilon=1e-07,
+                               centered=False,
+                               parameters=model.parameters())
+model.prepare(optimizer=opt,loss=SoftmaxWithCrossEntropy())
 
-    num_classes = 37
-    #验证集是从训练集中，切分出来的，so~~
-    train_images_path = ''
-    label_images_path = ''
-    # 验证数据集
-    val_dataset = build_imgsegment_model.PetDataset(train_images_path, label_images_path, mode='test')
+result = model.predict(pre_dataset)         #N*C*H*L,C是class的C
 
-    model = paddle.Model(build_imgsegment_model.PetNet(num_classes))
-    model.load('./model/final')
+img_index=0
+plt.figure()
+for i in range(len(result[0])):
 
-    opt = paddle.optimizer.RMSProp(learning_rate=0.0001,parameters=model.parameters())
-    loss = build_imgsegment_model.SoftmaxWithCrossEntropy()
-    model.prepare(optimizer=opt,loss=loss)
-    # #继续训练的
-    # model.fit()
-    predict_results = model.predict(val_dataset)       #预测结果为NCHW，模型最后一层是conv2d,C ==num_classes
+    image,label = pre_dataset[i]
+
+    if i ==n_image:
+        break
+
+    plt.subplot(n_image,3,img_index+1)
+    plt.imshow(np.array(image).transpose(1,2,0).astype(np.uint8))
+    plt.title('image')
+    plt.axis('off')
+
+    plt.subplot(n_image,3,img_index+2)
+    plt.imshow(np.array(label[0]).astype(np.uint8),cmap='gray')
+    plt.title('label')
+    plt.axis('off')
 
 
-    print(len(predict_results))
-    plt.figure(figsize=(10, 10))
+    #最后绘制预测结果不太明白，这个mask
+    #result.shape
+    data = result[0][i][0].transpose((1, 2, 0))       #shape(160*160*37)
+    mask = np.argmax(data, axis=-1)
+    mask = np.expand_dims(mask, axis=-1)
 
-    i = 0
-    mask_idx = 0
+    plt.subplot(n_image,3,img_index+3)
+    #plt.imshow(mask.astype('uint8'), cmap='gray')
+    plt.imshow(np.squeeze(mask, axis=2).astype('uint8'), cmap='gray')
+    plt.title('Predict')
+    plt.axis("off")
+    img_index+=3
 
-    for data in val_dataset:
-        if i > 8:
-            break
-        plt.subplot(3, 3, i + 1)
-        plt.imshow(data[0].transpose((1, 2, 0)).astype('uint8'))
-        plt.title('Input Image')
-        plt.axis("off")
-
-        plt.subplot(3, 3, i + 2)
-        plt.imshow(np.squeeze(data[1], axis=0).astype('uint8'), cmap='gray')
-        plt.title('Label')
-        plt.axis("off")
-
-        # 模型只有一个输出，所以我们通过predict_results[0]来取出1000个预测的结果
-        # 映射原始图片的index来取出预测结果，提取mask进行展示
-        data = predict_results[0][mask_idx][0].transpose((1, 2, 0))  #mask_idx的预测结果
-        mask = np.argmax(data, axis=-1)
-        mask = np.expand_dims(mask, axis=-1)
-
-        plt.subplot(3, 3, i + 3)
-        plt.imshow(np.squeeze(mask, axis=2).astype('uint8'), cmap='gray')
-        plt.title('Predict')
-        plt.axis("off")
-        i += 3
-        mask_idx += 1
-
-    plt.show()
-
+plt.show()

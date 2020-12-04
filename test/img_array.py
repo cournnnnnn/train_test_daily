@@ -1,6 +1,6 @@
 import PIL.Image as image
 import numpy as np
-path ='./a_000.png'
+path ='/home/chan/IdeaProjects/train_test_daily/spider/download_img/6.jpg'
 #读取图片
 img = image.open(path)
 #img转array

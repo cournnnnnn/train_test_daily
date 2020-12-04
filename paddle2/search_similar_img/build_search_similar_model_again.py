@@ -38,7 +38,15 @@ for epoch in range(epoch_num):
         similarities = paddle.multiply(similarities, inverse_temperature)
 
         sparse_labels = paddle.arange(0, num_classes, dtype='int64')
-
+        """
+        cross_entropy Parameters:
+                input (Tensor): Input tensor, the data type is float32, float64. Shape is
+                (N, C), where C is number of classes, and if shape is more than 2D, this
+                is (N, C, D1, D2,..., Dk), k >= 1.
+                label (Tensor): Label tensor, the data type is int64. Shape is (N), where each
+                value is 0 <= label[i] <= C-1, and if shape is more than 2D, this is
+                (N, D1, D2,..., Dk), k >= 1.
+        """
         loss = F.cross_entropy(similarities, sparse_labels)
 
         if batch_id % 500 == 0:

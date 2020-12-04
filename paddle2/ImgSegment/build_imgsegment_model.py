@@ -12,6 +12,7 @@ import os
 from PIL import Image
 from matplotlib import pyplot as plt
 from paddle.nn import functional as F
+import io
 
 class ImgTranspose(object):
     """
@@ -41,7 +42,7 @@ class PetDataset(Dataset):
         self.mode = mode.lower()
         self.eval_image_num = 1000
 
-        assert self.mode in ['train', 'test'], \
+        assert self.mode in ['train', 'test','prediction'], \
             "mode should be 'train' or 'test', but got {}".format(self.mode)
 
         self._parse_dataset()
@@ -80,6 +81,10 @@ class PetDataset(Dataset):
         if self.mode == 'train':
             self.train_images = temp_train_images[:-self.eval_image_num]
             self.label_images = temp_label_images[:-self.eval_image_num]
+            #我就拿前20图做预测
+        elif self.mode == 'prediction':
+            self.train_images = temp_train_images[:20]
+            self.label_images = temp_label_images[:20]
         else:
             self.train_images = temp_train_images[-self.eval_image_num:]
             self.label_images = temp_label_images[-self.eval_image_num:]
@@ -89,7 +94,7 @@ class PetDataset(Dataset):
         统一的图像处理接口封装，用于规整图像大小和通道
         """
         with open(path, 'rb') as f:
-            img = Image.open(paddle.io.BytesIO(f.read()))
+            img = Image.open(io.BytesIO(f.read()))
             if color_mode == 'grayscale':
                 # if image is not already an 8-bit, 16-bit or 32-bit grayscale image
                 # convert it to an 8-bit grayscale image.
@@ -161,7 +166,7 @@ class SeparableConv2d(paddle.nn.Layer):
                  data_format="NCHW"):
         super(SeparableConv2d, self).__init__()
         # 第一次卷积操作没有偏置参数
-        self.conv_1 = paddle.nn.Conv2d(in_channels,
+        self.conv_1 = paddle.nn.Conv2D(in_channels,
                                        in_channels,
                                        kernel_size,
                                        stride=stride,
@@ -171,7 +176,7 @@ class SeparableConv2d(paddle.nn.Layer):
                                        weight_attr=weight_attr,
                                        bias_attr=False,
                                        data_format=data_format)
-        self.pointwise = paddle.nn.Conv2d(in_channels,
+        self.pointwise = paddle.nn.Conv2D(in_channels,
                                           out_channels,
                                           1,
                                           stride=1,
@@ -200,13 +205,13 @@ class Encoder(paddle.nn.Layer):
                                                  out_channels,
                                                  kernel_size=3,
                                                  padding='same')
-        self.bn = paddle.nn.BatchNorm2d(out_channels)
+        self.bn = paddle.nn.BatchNorm2D(out_channels)
         self.separable_conv_02 = SeparableConv2d(out_channels,
                                                  out_channels,
                                                  kernel_size=3,
                                                  padding='same')
-        self.pool = paddle.nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.residual_conv = paddle.nn.Conv2d(in_channels,
+        self.pool = paddle.nn.MaxPool2D(kernel_size=3, stride=2, padding=1)
+        self.residual_conv = paddle.nn.Conv2D(in_channels,
                                               out_channels,
                                               kernel_size=1,
                                               stride=2,
@@ -238,18 +243,18 @@ class Decoder(paddle.nn.Layer):
 
         self.relu = paddle.nn.ReLU()
         #转置卷积的计算过程相当于卷积的反向计算
-        self.conv_transpose_01 = paddle.nn.ConvTranspose2d(in_channels,
+        self.conv_transpose_01 = paddle.nn.Conv2DTranspose(in_channels,
                                                            out_channels,
                                                            kernel_size=3,
                                                            padding='same')
-        self.conv_transpose_02 = paddle.nn.ConvTranspose2d(out_channels,
+        self.conv_transpose_02 = paddle.nn.Conv2DTranspose(out_channels,
                                                            out_channels,
                                                            kernel_size=3,
                                                            padding='same')
-        self.bn = paddle.nn.BatchNorm2d(out_channels)
+        self.bn = paddle.nn.BatchNorm2D(out_channels)
 
         self.upsample = paddle.nn.Upsample(scale_factor=2.0)
-        self.residual_conv = paddle.nn.Conv2d(in_channels,
+        self.residual_conv = paddle.nn.Conv2D(in_channels,
                                               out_channels,
                                               kernel_size=1,
                                               padding='same')
@@ -280,12 +285,12 @@ class PetNet(paddle.nn.Layer):
     def __init__(self, num_classes):
         super(PetNet, self).__init__()
 
-        self.conv_1 = paddle.nn.Conv2d(3, 32,
+        self.conv_1 = paddle.nn.Conv2D(3, 32,
                                        kernel_size=3,
                                        stride=2,
                                        padding='same')
         #根据当前批次数据按通道计算的均值和方差进行归一化
-        self.bn = paddle.nn.BatchNorm2d(32)
+        self.bn = paddle.nn.BatchNorm2D(32)
         self.relu = paddle.nn.ReLU()
 
         in_channels = 32
@@ -309,7 +314,7 @@ class PetNet(paddle.nn.Layer):
             self.decoders.append(block)
             in_channels = out_channels
 
-        self.output_conv = paddle.nn.Conv2d(in_channels,
+        self.output_conv = paddle.nn.Conv2D(in_channels,
                                             num_classes,
                                             kernel_size=3,
                                             padding='same')
@@ -362,8 +367,8 @@ def showimg(image,label):
 if __name__ == '__main__':
 
     ##下载数据太慢！！！！
-    train_images_path =''
-    label_images_path =''
+    train_images_path ='./images/'
+    label_images_path ='./annotations/trimaps/'
     num_classes = 37
     # 训练数据集
     train_dataset = PetDataset(train_images_path, label_images_path, mode='train')
@@ -386,4 +391,4 @@ if __name__ == '__main__':
     model.fit(train_dataset,
               val_dataset,
               epochs=15,
-              batch_size=32,save_dir='./model/final',save_freq=1)
+              batch_size=32,verbose=1,save_dir='./model/final',save_freq=1)
