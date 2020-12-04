@@ -1,7 +1,6 @@
 import os
 import cv2
 import random
-import numpy as np
 
 base_path = '/home/chan/dataset/eye/PALM-Training400/PALM-Training400'
 
