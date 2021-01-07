@@ -2,7 +2,8 @@
 对个图片处理，合成视频就 哈哈
 # plt.imread/cv2.imread/PIL.Image.open的区别
 # plt.imread和PIL.Image.open读入的都是RGB顺序，而opencv中cv2.imread读入的是BGR通道顺序 。cv2.imread会显示图片更蓝一些。
-
+# imread  是array
+# open    是一个对象
 """
 
 import cv2
